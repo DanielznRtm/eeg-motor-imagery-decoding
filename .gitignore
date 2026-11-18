@@ -1,0 +1,31 @@
+# Data (downloaded by MOABB to ~/mne_data; never commit raw EEG)
+data/
+mne_data/
+*.gdf
+*.mat
+*.fif
+*.npz
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Model checkpoints (large, reproducible from configs)
+checkpoints/
+*.pt
+*.pth
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

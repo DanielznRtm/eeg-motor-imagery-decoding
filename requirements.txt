@@ -1,0 +1,19 @@
+# Python 3.11. Versions pinned to the ones used to produce results/.
+# CPU-only PyTorch (smaller download):
+#   pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements.txt
+torch==2.15.0
+mne==1.13.2
+moabb==1.7.2
+braindecode==2.0.0
+scikit-learn==1.9.1
+scipy==1.17.1
+numpy==2.4.6
+pandas==3.1.1
+matplotlib==3.11.2
+PyYAML==6.0.3
+pytest==9.2.0
+jupyter==1.1.1
+nbconvert==7.17.2
+nbformat==5.11.1
+ipykernel==7.4.0
