@@ -6,8 +6,7 @@ model on BCI Competition IV dataset 2a.
 
 > **Status: work in progress.** Phase 1 (setup + exploratory analysis) and
 > Phase 2 (classical baselines) are done; EEGNet and the recurrent model come
-> next. Every number in this README is produced by a script in this repository
-> and saved under `results/`.
+> next. Every number in this README are saved under `results/`.
 
 ## Protocol
 
