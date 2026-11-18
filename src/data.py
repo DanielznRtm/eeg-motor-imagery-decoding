@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
@@ -32,14 +33,19 @@ from sklearn.model_selection import train_test_split
 
 # MOABB 1.7 calls a montage name that MNE 1.13 deprecates; harmless for us.
 warnings.filterwarnings("ignore", message="Montage name 'standard_1005'", category=FutureWarning)
+os.environ.setdefault("MNE_LOGGING_LEVEL", "WARNING")  # also inherited by worker processes
 mne.set_log_level("WARNING")
 logging.getLogger("moabb").setLevel(logging.WARNING)
 
 from moabb.datasets import BNCI2014_001  # noqa: E402
-from moabb.paradigms import MotorImagery  # noqa: E402
+from moabb.paradigms import FilterBankMotorImagery, MotorImagery  # noqa: E402
 
 SUBJECTS = list(range(1, 10))
 CLASSES = ["left_hand", "right_hand", "feet", "tongue"]  # label index = position
+EEG_CHANNELS = [
+    "Fz", "FC3", "FC1", "FCz", "FC2", "FC4", "C5", "C3", "C1", "Cz", "C2",
+    "C4", "C6", "CP3", "CP1", "CPz", "CP2", "CP4", "P1", "Pz", "P2", "POz",
+]  # order returned by MOABB; EOG channels are dropped by the paradigm
 SESSION_TRAIN = "0train"
 SESSION_TEST = "1test"
 CUE_ONSET = 2.0  # seconds after trial start
@@ -62,13 +68,27 @@ class EpochConfig:
     tmin: float = 0.5  # relative to cue
     tmax: float = 2.5  # relative to cue
     resample: float | None = None  # Hz; None keeps 250 Hz
+    # Filter bank: if given, fmin/fmax are ignored and each (lo, hi) band is
+    # applied separately; arrays then get a band axis (see SubjectData).
+    bands: tuple[tuple[float, float], ...] | None = None
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EpochConfig":
+        d = dict(d)
+        if d.get("bands") is not None:
+            d["bands"] = tuple(tuple(float(f) for f in b) for b in d["bands"])
+        return cls(**d)
 
 
 @dataclass
 class SubjectData:
-    """Arrays for one subject, split by the competition protocol."""
+    """Arrays for one subject, split by the competition protocol.
 
-    X_train: np.ndarray  # (n_trials, n_channels, n_times), microvolts
+    X arrays are (n_trials, n_channels, n_times) in microvolts, or
+    (n_trials, n_bands, n_channels, n_times) when a filter bank is used.
+    """
+
+    X_train: np.ndarray
     y_train: np.ndarray  # (n_trials,), int in [0, 3]
     X_test: np.ndarray
     y_test: np.ndarray
@@ -106,10 +126,37 @@ def encode_labels(labels) -> np.ndarray:
     return np.array([mapping[str(lab)] for lab in labels], dtype=np.int64)
 
 
+def _load_filterbank(subject: int, cfg: EpochConfig):
+    """Filter-bank arrays: (n_trials, n_bands, n_channels, n_times) in microvolts.
+
+    Unlike ``mne.Epochs`` (volts), MOABB's array output is already in microvolts.
+    """
+    paradigm = FilterBankMotorImagery(
+        n_classes=4,
+        events=CLASSES,
+        filters=[list(b) for b in cfg.bands],
+        tmin=cfg.tmin,
+        tmax=cfg.tmax,
+        resample=cfg.resample,
+    )
+    X, labels, meta = paradigm.get_data(BNCI2014_001(), subjects=[subject])
+    if X.ndim == 3:  # MOABB drops the band axis when there is a single band
+        X = X[..., np.newaxis]
+    X = np.moveaxis(X, -1, 1).astype(np.float32)
+    sfreq = cfg.resample or RAW_SFREQ
+    times = cfg.tmin + np.arange(X.shape[-1]) / sfreq
+    return X, encode_labels(labels), meta.reset_index(drop=True), list(EEG_CHANNELS), sfreq, times
+
+
 def load_subject(subject: int, cfg: EpochConfig) -> SubjectData:
     """Load one subject and split it into session 1 (train) and session 2 (test)."""
-    epochs, y, meta = load_epochs(subject, cfg)
-    X = epochs.get_data(copy=True).astype(np.float32) * 1e6  # V -> uV
+    if cfg.bands:
+        X, y, meta, ch_names, sfreq, times = _load_filterbank(subject, cfg)
+    else:
+        epochs, y, meta = load_epochs(subject, cfg)
+        X = epochs.get_data(copy=True).astype(np.float32) * 1e6  # V -> uV
+        ch_names, sfreq, times = list(epochs.ch_names), float(epochs.info["sfreq"]), epochs.times.copy()
+        assert ch_names == EEG_CHANNELS, ch_names
     is_train = (meta["session"] == SESSION_TRAIN).to_numpy()
     is_test = (meta["session"] == SESSION_TEST).to_numpy()
     assert is_train.sum() + is_test.sum() == len(y), "unexpected session names"
@@ -119,9 +166,9 @@ def load_subject(subject: int, cfg: EpochConfig) -> SubjectData:
         X_test=X[is_test],
         y_test=y[is_test],
         run_train=meta.loc[is_train, "run"].astype(int).to_numpy(),
-        ch_names=list(epochs.ch_names),
-        sfreq=float(epochs.info["sfreq"]),
-        times=epochs.times.copy(),
+        ch_names=ch_names,
+        sfreq=sfreq,
+        times=times,
     )
 
 

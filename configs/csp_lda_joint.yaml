@@ -1,0 +1,24 @@
+# Ablation: CSP + LDA with MNE's native multiclass CSP (joint approximate
+# diagonalization) instead of one-vs-rest. Everything else as csp_lda.yaml.
+# Run: python -m src.train --config configs/csp_lda_joint.yaml
+name: csp_lda_joint
+seed: 42
+
+data:
+  fmin: 8.0
+  fmax: 30.0
+  tmin: 0.5
+  tmax: 2.5
+  resample: null
+
+model:
+  type: csp_lda
+  multiclass: joint
+  reg: ledoit_wolf
+  n_components: 8
+
+search:
+  cv_folds: 5
+  n_jobs: 1               # serial: deterministic, avoids Windows process-pool issues
+  param_grid:
+    csp__n_components: [4, 6, 8, 10, 12]

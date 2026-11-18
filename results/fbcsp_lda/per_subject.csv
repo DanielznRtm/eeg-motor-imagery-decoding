@@ -1,0 +1,10 @@
+subject,accuracy,kappa,cv_accuracy_session1,best_params,fit_time_s,n_train,n_test
+1,0.7674,0.6898,0.8299,"{""fbcsp__csp__n_components"": 2, ""select__k"": 16}",111.2703,288,288
+2,0.4444,0.2593,0.5379,"{""fbcsp__csp__n_components"": 4, ""select__k"": 64}",125.9006,288,288
+3,0.8646,0.8194,0.8959,"{""fbcsp__csp__n_components"": 4, ""select__k"": 32}",114.3960,288,288
+4,0.5521,0.4028,0.5621,"{""fbcsp__csp__n_components"": 2, ""select__k"": 32}",113.8205,288,288
+5,0.5278,0.3704,0.7045,"{""fbcsp__csp__n_components"": 2, ""select__k"": 64}",109.1107,288,288
+6,0.4688,0.2917,0.4653,"{""fbcsp__csp__n_components"": 4, ""select__k"": 8}",111.6336,288,288
+7,0.8368,0.7824,0.9201,"{""fbcsp__csp__n_components"": 4, ""select__k"": 64}",106.3636,288,288
+8,0.8160,0.7546,0.8888,"{""fbcsp__csp__n_components"": 4, ""select__k"": 64}",110.8184,288,288
+9,0.7500,0.6667,0.8543,"{""fbcsp__csp__n_components"": 2, ""select__k"": 64}",109.6553,288,288

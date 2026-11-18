@@ -93,6 +93,17 @@ def test_subject_units_are_microvolts(subject1):
 
 
 @pytest.mark.data
+def test_filter_bank_matches_single_band_path(subject1):
+    """MOABB arrays are in uV but mne.Epochs are in V: both load paths must agree."""
+    single = load_subject(1, EpochConfig(fmin=8.0, fmax=12.0, tmin=0.5, tmax=2.5))
+    bank = load_subject(1, EpochConfig(tmin=0.5, tmax=2.5, bands=((8.0, 12.0), (12.0, 16.0))))
+    assert bank.X_train.shape == (288, 2, 22, 501)
+    assert bank.ch_names == single.ch_names
+    np.testing.assert_allclose(bank.X_train[:, 0], single.X_train, rtol=1e-4, atol=1e-3)
+    np.testing.assert_array_equal(bank.y_test, single.y_test)
+
+
+@pytest.mark.data
 def test_resampling_to_128_hz():
     d = load_subject(1, EpochConfig(fmin=4.0, fmax=40.0, tmin=0.5, tmax=2.5, resample=128.0))
     assert d.sfreq == 128.0

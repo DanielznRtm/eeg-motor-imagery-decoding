@@ -1,0 +1,23 @@
+# CSP + LDA baseline, one-vs-rest multiclass CSP.
+# Run: python -m src.train --config configs/csp_lda.yaml
+name: csp_lda
+seed: 42
+
+data:
+  fmin: 8.0     # mu + beta: where the ERD/ERS lives (see notebooks/01_eda.ipynb)
+  fmax: 30.0
+  tmin: 0.5     # seconds after the cue; skips the visual evoked response
+  tmax: 2.5
+  resample: null
+
+model:
+  type: csp_lda
+  multiclass: ovr          # one binary CSP per class vs. rest
+  reg: ledoit_wolf         # shrinkage covariance estimate
+  n_components: 4          # overwritten by the grid search below
+
+search:                    # chosen by stratified 5-fold CV on session 1 only
+  cv_folds: 5
+  n_jobs: 1               # serial: deterministic, avoids Windows process-pool issues
+  param_grid:
+    csp__n_components: [2, 4, 6, 8]

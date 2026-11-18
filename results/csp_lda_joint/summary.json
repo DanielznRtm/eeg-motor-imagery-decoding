@@ -1,0 +1,18 @@
+{
+  "experiment": "csp_lda_joint",
+  "accuracy_mean": 0.6412037037037037,
+  "accuracy_std": 0.17693008074440653,
+  "kappa_mean": 0.5216049382716049,
+  "kappa_std": 0.23590677432587537,
+  "n_subjects": 9,
+  "chance_upper_bound_accuracy_p05": 0.2916666666666667,
+  "created_utc": "2026-11-18T21:01:23+00:00",
+  "git_commit": "4f3a7a4",
+  "environment": {
+    "python": "3.11.9",
+    "mne": "1.13.2",
+    "moabb": "1.7.2",
+    "scikit-learn": "1.9.1",
+    "torch": "2.15.0+cpu"
+  }
+}
